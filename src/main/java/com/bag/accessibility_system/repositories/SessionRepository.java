@@ -2,6 +2,7 @@ package com.bag.accessibility_system.repositories;
 
 import com.bag.accessibility_system.entities.Course;
 import com.bag.accessibility_system.entities.Session;
+import com.bag.accessibility_system.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -27,4 +28,10 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
      * Usado en GET /api/courses/{curso_id}/history para el historial.
      */
     List<Session> findAllByCourseOrderByCreatedAtDesc(Course course);
+
+    /**
+     * Lista todas las sesiones de todos los cursos de un docente ordenadas por fecha descendente.
+     * Usado en GET /api/courses/history para el listado global de sesiones recientes del docente.
+     */
+    List<Session> findAllByCourseTeacherOrderByCreatedAtDesc(User teacher);
 }
