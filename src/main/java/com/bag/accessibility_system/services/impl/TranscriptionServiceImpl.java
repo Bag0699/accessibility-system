@@ -37,6 +37,16 @@ public class TranscriptionServiceImpl implements TranscriptionService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<SessionResponse> getAllTeacherSessions() {
+        User authenticatedTeacher = getAuthenticatedUser();
+        return sessionRepository.findAllByCourseTeacherOrderByCreatedAtDesc(authenticatedTeacher)
+                .stream()
+                .map(sessionMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<SessionResponse> getCourseHistory(UUID courseId) {
         User authenticatedTeacher = getAuthenticatedUser();
 

@@ -9,6 +9,12 @@ import java.util.UUID;
 public interface TranscriptionService {
 
     /**
+     * Obtiene la lista de todas las sesiones de todos los cursos del docente autenticado,
+     * ordenadas cronológicamente de forma descendente.
+     */
+    List<SessionResponse> getAllTeacherSessions();
+
+    /**
      * Obtiene el historial de sesiones pasadas agrupadas por curso.
      * Solo el docente dueño del curso puede acceder a este historial.
      */
