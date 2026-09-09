@@ -21,8 +21,19 @@ public class TranscriptionController {
     private final TranscriptionService transcriptionService;
 
     /**
+     * GET /api/courses/history
+     * Obtiene la lista de todas las sesiones de todos los cursos del docente autenticado,
+     * ordenadas de la más reciente a la más antigua.
+     * Protegido por hasRole("TEACHER") a nivel de configuración (/api/courses/**).
+     */
+    @GetMapping("/courses/history")
+    public ResponseEntity<List<SessionResponse>> getAllTeacherSessions() {
+        return ResponseEntity.ok(transcriptionService.getAllTeacherSessions());
+    }
+
+    /**
      * GET /api/courses/{courseId}/history
-     * Obtiene la lista de sesiones de un curso, ordenadas de más reciente a más antigua.
+     * Obtiene la lista de sesiones de un curso específico, ordenadas de más reciente a más antigua.
      * Protegido por hasRole("TEACHER") a nivel de configuración (/api/courses/**).
      */
     @GetMapping("/courses/{courseId}/history")
