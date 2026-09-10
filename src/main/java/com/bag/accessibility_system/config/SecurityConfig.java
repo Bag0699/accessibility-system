@@ -46,7 +46,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll() // WebSockets permitidos (la seguridad de WS se hace a nivel de canal STOMP a menudo)
+                        .requestMatchers("/ws/**","/ws-sockjs/**").permitAll() // WebSockets permitidos (la seguridad de WS se hace a nivel de canal STOMP a menudo)
                         .requestMatchers("/api/courses/**").hasRole("TEACHER")
                         .anyRequest().authenticated()
                 )
