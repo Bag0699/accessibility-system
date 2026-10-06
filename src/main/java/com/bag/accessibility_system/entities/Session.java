@@ -35,6 +35,9 @@ public class Session {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
+    @Column(name = "ended_at")
+    private OffsetDateTime endedAt;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = OffsetDateTime.now();
