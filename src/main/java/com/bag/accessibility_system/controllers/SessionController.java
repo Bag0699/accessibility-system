@@ -1,5 +1,6 @@
 package com.bag.accessibility_system.controllers;
 
+import com.bag.accessibility_system.dtos.response.SessionJoinResponse;
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 import com.bag.accessibility_system.services.SessionService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,15 @@ public class SessionController {
     @GetMapping("/api/sessions/{code}")
     public ResponseEntity<SessionResponse> getSessionByCode(@PathVariable String code) {
         return ResponseEntity.ok(sessionService.getActiveSessionByCode(code));
+    }
+
+    /**
+     * POST /api/sessions/{code}/join
+     * El estudiante se une a la sesión activa y se registra su asistencia.
+     */
+    @PostMapping("/api/sessions/{code}/join")
+    public ResponseEntity<SessionJoinResponse> joinSession(@PathVariable String code) {
+        return ResponseEntity.ok(sessionService.joinSession(code));
     }
 
     /**

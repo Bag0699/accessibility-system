@@ -1,13 +1,16 @@
 package com.bag.accessibility_system.services.impl;
 
+import com.bag.accessibility_system.dtos.response.SessionJoinResponse;
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 import com.bag.accessibility_system.entities.Course;
 import com.bag.accessibility_system.entities.Session;
+import com.bag.accessibility_system.entities.SessionAttendance;
 import com.bag.accessibility_system.entities.User;
 import com.bag.accessibility_system.exceptions.custom.BadRequestException;
 import com.bag.accessibility_system.exceptions.custom.ResourceNotFoundException;
 import com.bag.accessibility_system.mappers.SessionMapper;
 import com.bag.accessibility_system.repositories.CourseRepository;
+import com.bag.accessibility_system.repositories.SessionAttendanceRepository;
 import com.bag.accessibility_system.repositories.SessionRepository;
 import com.bag.accessibility_system.repositories.UserRepository;
 import com.bag.accessibility_system.services.SessionService;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Service
@@ -30,6 +34,7 @@ public class SessionServiceImpl implements SessionService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final SessionRepository sessionRepository;
+    private final SessionAttendanceRepository sessionAttendanceRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final SessionMapper sessionMapper;
@@ -95,6 +100,7 @@ public class SessionServiceImpl implements SessionService {
         }
 
         session.setIsActive(false);
+        session.setEndedAt(OffsetDateTime.now());
         Session savedSession = sessionRepository.save(session);
         SessionResponse response = sessionMapper.toResponse(savedSession);
 
@@ -102,6 +108,36 @@ public class SessionServiceImpl implements SessionService {
         messagingTemplate.convertAndSend("/topic/session/" + code + "/status", response);
 
         return response;
+    }
+
+    @Override
+    @Transactional
+    public SessionJoinResponse joinSession(String code) {
+        User authenticatedUser = getAuthenticatedUser();
+
+        Session session = sessionRepository.findByCodeAndIsActiveTrue(code)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "La sesión con código '" + code + "' no existe o ya ha finalizado."
+                ));
+
+        // Registrar asistencia si no existe previamente
+        sessionAttendanceRepository.findBySessionAndStudent(session, authenticatedUser)
+                .orElseGet(() -> {
+                    SessionAttendance attendance = new SessionAttendance();
+                    attendance.setSession(session);
+                    attendance.setStudent(authenticatedUser);
+                    attendance.setJoinedAt(OffsetDateTime.now());
+                    return sessionAttendanceRepository.save(attendance);
+                });
+
+        return new SessionJoinResponse(
+                session.getId(),
+                session.getCode(),
+                session.getCourse().getName(),
+                session.getCourse().getTeacher().getName(),
+                session.getIsActive(),
+                session.getCreatedAt()
+        );
     }
 
     // --- Métodos privados de ayuda ---

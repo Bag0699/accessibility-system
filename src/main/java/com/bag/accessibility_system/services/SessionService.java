@@ -1,5 +1,6 @@
 package com.bag.accessibility_system.services;
 
+import com.bag.accessibility_system.dtos.response.SessionJoinResponse;
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 
 import java.util.UUID;
@@ -20,4 +21,9 @@ public interface SessionService {
      * Finaliza una sesión activa. Solo puede ser invocado por el docente dueño del curso.
      */
     SessionResponse endSession(String code);
+
+    /**
+     * El estudiante se une a una sesión activa y se registra su asistencia.
+     */
+    SessionJoinResponse joinSession(String code);
 }
