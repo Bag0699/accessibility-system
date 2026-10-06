@@ -10,4 +10,9 @@ public interface StudentService {
      * Obtiene el historial de sesiones a las que ha asistido el estudiante autenticado.
      */
     List<StudentHistoryResponse> getStudentHistory();
+
+    /**
+     * Obtiene el detalle de una sesión asistida por el estudiante según el código.
+     */
+    StudentHistoryResponse getStudentSessionByCode(String code);
 }
