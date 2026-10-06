@@ -2,9 +2,12 @@ package com.bag.accessibility_system.controllers;
 
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 import com.bag.accessibility_system.dtos.response.TranscriptionResponse;
+import com.bag.accessibility_system.dtos.DeepgramTokenResponse;
 import com.bag.accessibility_system.services.TranscriptionService;
+import com.bag.accessibility_system.services.TranscriptionTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +22,7 @@ import java.util.UUID;
 public class TranscriptionController {
 
     private final TranscriptionService transcriptionService;
+    private final TranscriptionTokenService transcriptionTokenService;
 
     /**
      * GET /api/courses/history
@@ -49,5 +53,16 @@ public class TranscriptionController {
     @GetMapping("/sessions/{code}/transcriptions")
     public ResponseEntity<List<TranscriptionResponse>> getSessionTranscriptions(@PathVariable String code) {
         return ResponseEntity.ok(transcriptionService.getSessionTranscriptions(code));
+    }
+
+    /**
+     * GET /api/transcription/token
+     * Genera un token efímero de Deepgram para el frontend.
+     */
+    @GetMapping("/transcription/token")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<DeepgramTokenResponse> getDeepgramToken() {
+        String token = transcriptionTokenService.generateEphemeralToken();
+        return ResponseEntity.ok(new DeepgramTokenResponse(token));
     }
 }
