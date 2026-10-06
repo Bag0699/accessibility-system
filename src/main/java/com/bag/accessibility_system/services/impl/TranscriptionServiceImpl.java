@@ -6,10 +6,12 @@ import com.bag.accessibility_system.entities.Course;
 import com.bag.accessibility_system.entities.Session;
 import com.bag.accessibility_system.entities.Transcription;
 import com.bag.accessibility_system.entities.User;
+import com.bag.accessibility_system.entities.enums.Role;
 import com.bag.accessibility_system.exceptions.custom.ResourceNotFoundException;
 import com.bag.accessibility_system.mappers.SessionMapper;
 import com.bag.accessibility_system.mappers.TranscriptionMapper;
 import com.bag.accessibility_system.repositories.CourseRepository;
+import com.bag.accessibility_system.repositories.SessionAttendanceRepository;
 import com.bag.accessibility_system.repositories.SessionRepository;
 import com.bag.accessibility_system.repositories.TranscriptionRepository;
 import com.bag.accessibility_system.repositories.UserRepository;
@@ -29,6 +31,7 @@ public class TranscriptionServiceImpl implements TranscriptionService {
 
     private final TranscriptionRepository transcriptionRepository;
     private final SessionRepository sessionRepository;
+    private final SessionAttendanceRepository sessionAttendanceRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     
@@ -67,13 +70,23 @@ public class TranscriptionServiceImpl implements TranscriptionService {
     @Override
     @Transactional(readOnly = true)
     public List<TranscriptionResponse> getSessionTranscriptions(String code) {
+        User authenticatedUser = getAuthenticatedUser();
+
         Session session = sessionRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("La sesión con código '" + code + "' no existe."));
 
-        // Nota: Las transcripciones de una sesión pueden ser vistas tanto por el docente
-        // como por los estudiantes que tengan el código, por lo que no aplicamos restricción
-        // estricta de propiedad de curso aquí, a menos que el requerimiento cambie.
-        
+        // Validación RBAC:
+        if (authenticatedUser.getRole() == Role.STUDENT) {
+            boolean hasAttended = sessionAttendanceRepository.existsBySessionAndStudent(session, authenticatedUser);
+            if (!hasAttended) {
+                throw new AccessDeniedException("No tienes permiso para ver las transcripciones de una clase a la que no asististe.");
+            }
+        } else if (authenticatedUser.getRole() == Role.TEACHER) {
+            if (!session.getCourse().getTeacher().getId().equals(authenticatedUser.getId())) {
+                throw new AccessDeniedException("No tienes permiso para ver las transcripciones de un curso ajeno.");
+            }
+        }
+
         return transcriptionRepository.findAllBySessionOrderByStartTimeAsc(session)
                 .stream()
                 .map(transcriptionMapper::toResponse)

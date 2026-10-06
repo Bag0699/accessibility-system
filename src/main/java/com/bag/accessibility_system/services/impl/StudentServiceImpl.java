@@ -40,6 +40,26 @@ public class StudentServiceImpl implements StudentService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public StudentHistoryResponse getStudentSessionByCode(String code) {
+        User student = getAuthenticatedUser();
+        SessionAttendance attendance = sessionAttendanceRepository
+                .findBySessionCodeAndStudentWithDetails(code, student)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró registro de asistencia para la sesión con código '" + code + "'."
+                ));
+
+        return new StudentHistoryResponse(
+                attendance.getSession().getId(),
+                attendance.getSession().getCode(),
+                attendance.getSession().getCourse().getName(),
+                attendance.getSession().getCourse().getTeacher().getName(),
+                attendance.getJoinedAt(),
+                attendance.getSession().getEndedAt()
+        );
+    }
+
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)

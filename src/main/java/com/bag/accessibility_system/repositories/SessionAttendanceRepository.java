@@ -15,6 +15,8 @@ public interface SessionAttendanceRepository extends JpaRepository<SessionAttend
 
     Optional<SessionAttendance> findBySessionAndStudent(Session session, User student);
 
+    boolean existsBySessionAndStudent(Session session, User student);
+
     @Query("SELECT sa FROM SessionAttendance sa " +
            "JOIN FETCH sa.session s " +
            "JOIN FETCH s.course c " +
@@ -22,4 +24,11 @@ public interface SessionAttendanceRepository extends JpaRepository<SessionAttend
            "WHERE sa.student = :student " +
            "ORDER BY sa.joinedAt DESC")
     List<SessionAttendance> findAllByStudentWithDetailsOrderByJoinedAtDesc(@Param("student") User student);
+
+    @Query("SELECT sa FROM SessionAttendance sa " +
+           "JOIN FETCH sa.session s " +
+           "JOIN FETCH s.course c " +
+           "JOIN FETCH c.teacher t " +
+           "WHERE s.code = :code AND sa.student = :student")
+    Optional<SessionAttendance> findBySessionCodeAndStudentWithDetails(@Param("code") String code, @Param("student") User student);
 }
