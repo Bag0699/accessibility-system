@@ -12,6 +12,7 @@ import com.bag.accessibility_system.repositories.SessionRepository;
 import com.bag.accessibility_system.repositories.UserRepository;
 import com.bag.accessibility_system.services.SessionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class SessionServiceImpl implements SessionService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final SessionMapper sessionMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -93,7 +95,13 @@ public class SessionServiceImpl implements SessionService {
         }
 
         session.setIsActive(false);
-        return sessionMapper.toResponse(sessionRepository.save(session));
+        Session savedSession = sessionRepository.save(session);
+        SessionResponse response = sessionMapper.toResponse(savedSession);
+
+        // Notificar a todos los estudiantes suscritos que la sesión finalizó
+        messagingTemplate.convertAndSend("/topic/session/" + code + "/status", response);
+
+        return response;
     }
 
     // --- Métodos privados de ayuda ---
