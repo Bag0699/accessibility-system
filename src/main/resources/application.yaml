@@ -26,6 +26,13 @@ spring:
     secret: ${JWT_SECRET:413F4428472B4B6250655368566D5970337336763979244226452948404D6351}
     expiration: ${JWT_EXPIRATION:86400000} # 24 horas por defecto
 
+server:
+  port: ${PORT:10000}
+
+app:
+  cors:
+    origins: ${APP_CORS_ORIGINS:http://localhost:5173}
+
 deepgram:
   api-key: ${DEEPGRAM_API_KEY:}
   project-id: ${DEEPGRAM_PROJECT_ID:}
