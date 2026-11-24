@@ -15,3 +15,20 @@ Las variables reales se guardan en Render, no en Git. El archivo `.env.example` 
 ## Desarrollo local
 
 Sin el perfil `prod`, la aplicación usa PostgreSQL local por defecto y carga los datos de desarrollo de Flyway. Ejecuta `./mvnw spring-boot:run` en macOS/Linux o `./mvnw.cmd spring-boot:run` en Windows.
+
+Para ejecutar pruebas unitarias:
+
+```bash
+./mvnw.cmd test -Dtest=SessionPresenceTrackerTest
+```
+
+## Capacidades principales
+
+* **Autenticación y roles (`/api/auth/**`):** Registro e inicio de sesión para `TEACHER` y `STUDENT` mediante JWT y contraseñas cifradas con BCrypt.
+* **Cursos y sesiones (`/api/courses/**`, `/api/sessions/**`):** Creación de cursos y sesiones con código único, unión con registro de asistencia (`SessionAttendance`), cierre de sesión con notificación en tiempo real y consulta de estudiantes conectados en vivo (`GET /api/sessions/{code}/connected-count`).
+* **Transcripción y tokens efímeros (`/api/transcription/token`, `/api/sessions/{code}/transcriptions`):** Emisión de credenciales efímeras de Deepgram para docentes, persistencia de fragmentos y consulta protegida por rol y asistencia.
+* **Historial y preferencias (`/api/courses/history`, `/api/courses/{courseId}/history`, `/api/student/history/**`, `/api/users/me/preferences`):** Consulta de sesiones para docentes y estudiantes, y persistencia de preferencias de accesibilidad.
+* **Tiempo real STOMP (`/ws`, `/ws-sockjs`):**
+  * `/app/transcription/{sessionCode}` → `/topic/session/{sessionCode}` para fragmentos de transcripción.
+  * `/topic/session/{sessionCode}/status` para notificar la finalización de la sesión.
+  * `/topic/session/{sessionCode}/presence` para difundir en vivo el conteo de estudiantes conectados (`SessionPresenceTracker`).
