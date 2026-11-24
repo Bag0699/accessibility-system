@@ -1,11 +1,13 @@
 package com.bag.accessibility_system.controllers;
 
 import com.bag.accessibility_system.dtos.response.SessionJoinResponse;
+import com.bag.accessibility_system.dtos.response.SessionPresenceResponse;
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 import com.bag.accessibility_system.services.SessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,5 +57,15 @@ public class SessionController {
     @PutMapping("/api/sessions/{code}/end")
     public ResponseEntity<SessionResponse> endSession(@PathVariable String code) {
         return ResponseEntity.ok(sessionService.endSession(code));
+    }
+
+    /**
+     * GET /api/sessions/{code}/connected-count
+     * Devuelve el número de estudiantes conectados actualmente vía WebSocket a la sesión.
+     */
+    @GetMapping("/api/sessions/{code}/connected-count")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<SessionPresenceResponse> getConnectedCount(@PathVariable String code) {
+        return ResponseEntity.ok(sessionService.getConnectedCount(code));
     }
 }

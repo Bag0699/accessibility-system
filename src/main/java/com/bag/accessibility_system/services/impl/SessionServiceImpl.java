@@ -1,6 +1,7 @@
 package com.bag.accessibility_system.services.impl;
 
 import com.bag.accessibility_system.dtos.response.SessionJoinResponse;
+import com.bag.accessibility_system.dtos.response.SessionPresenceResponse;
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 import com.bag.accessibility_system.entities.Course;
 import com.bag.accessibility_system.entities.Session;
@@ -14,6 +15,7 @@ import com.bag.accessibility_system.repositories.SessionAttendanceRepository;
 import com.bag.accessibility_system.repositories.SessionRepository;
 import com.bag.accessibility_system.repositories.UserRepository;
 import com.bag.accessibility_system.services.SessionService;
+import com.bag.accessibility_system.websocket.SessionPresenceTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
@@ -39,6 +41,7 @@ public class SessionServiceImpl implements SessionService {
     private final UserRepository userRepository;
     private final SessionMapper sessionMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final SessionPresenceTracker sessionPresenceTracker;
 
     @Override
     @Transactional
@@ -79,19 +82,7 @@ public class SessionServiceImpl implements SessionService {
     @Override
     @Transactional
     public SessionResponse endSession(String code) {
-        User authenticatedUser = getAuthenticatedUser();
-
-        Session session = sessionRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "La sesión con código '" + code + "' no existe."
-                ));
-
-        // Válida que el docente autenticado sea el dueño del curso al que pertenece esta sesión
-        if (!session.getCourse().getTeacher().getId().equals(authenticatedUser.getId())) {
-            throw new AccessDeniedException(
-                    "No tienes permiso para finalizar esta sesión."
-            );
-        }
+        Session session = getOwnedSession(code, "No tienes permiso para finalizar esta sesión.");
 
         if (!session.getIsActive()) {
             throw new BadRequestException(
@@ -108,6 +99,13 @@ public class SessionServiceImpl implements SessionService {
         messagingTemplate.convertAndSend("/topic/session/" + code + "/status", response);
 
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SessionPresenceResponse getConnectedCount(String code) {
+        Session session = getOwnedSession(code, "No tienes permiso para consultar esta sesión.");
+        return new SessionPresenceResponse(sessionPresenceTracker.getConnectedCount(session.getCode()));
     }
 
     @Override
@@ -141,6 +139,20 @@ public class SessionServiceImpl implements SessionService {
     }
 
     // --- Métodos privados de ayuda ---
+
+    private Session getOwnedSession(String code, String deniedMessage) {
+        User authenticatedUser = getAuthenticatedUser();
+
+        Session session = sessionRepository.findByCode(code)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "La sesión con código '" + code + "' no existe."
+                ));
+
+        if (!session.getCourse().getTeacher().getId().equals(authenticatedUser.getId())) {
+            throw new AccessDeniedException(deniedMessage);
+        }
+        return session;
+    }
 
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();

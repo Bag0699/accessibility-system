@@ -1,6 +1,7 @@
 package com.bag.accessibility_system.services;
 
 import com.bag.accessibility_system.dtos.response.SessionJoinResponse;
+import com.bag.accessibility_system.dtos.response.SessionPresenceResponse;
 import com.bag.accessibility_system.dtos.response.SessionResponse;
 
 import java.util.UUID;
@@ -26,4 +27,9 @@ public interface SessionService {
      * El estudiante se une a una sesión activa y se registra su asistencia.
      */
     SessionJoinResponse joinSession(String code);
+
+    /**
+     * Obtiene la cantidad de estudiantes conectados en tiempo real a una sesión del docente autenticado.
+     */
+    SessionPresenceResponse getConnectedCount(String code);
 }
